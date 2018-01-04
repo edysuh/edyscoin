@@ -1,11 +1,10 @@
-package Block
+package block
 
 import (
 	"testing"
-	"block"
 )
 
 func TestBlock(t *testing.T) {
-	b := block.CreateFirstBlock()
+	b := NewFirstBlock()
 	b.Save()
 }
