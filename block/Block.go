@@ -17,22 +17,23 @@ type Block struct {
 	Index        int
 	TimeStamp    time.Time
 	PrevHash     [32]byte
-	Nonce        string
+	Nonce        int64
 	Transactions []Transaction
 }
 
-func NewBlock(index int, prev [32]byte, nonce string, tact []Transaction) Block {
+func NewBlock(index int, prev [32]byte, nonce int64, tact []Transaction) Block {
 	return Block{index, time.Now(), prev, nonce, tact}
 }
 
 func NewFirstBlock() Block {
 	var noprev [32]byte
-	return NewBlock(0, noprev, "", make([]Transaction, SIZE))
+	return NewBlock(0, noprev, 0, make([]Transaction, SIZE))
 }
 
+// eventually implement merkle tree
 func (b *Block) ComputeHash() [32]byte {
 	payload := string(b.Index) + b.TimeStamp.String() + string(b.PrevHash[:]) +
-		b.Nonce
+		string(b.Nonce)
 	return sha256.Sum256([]byte(payload))
 }
 
