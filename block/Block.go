@@ -5,12 +5,10 @@ import (
 	"time"
 )
 
-var SIZE = 32
-
 type Transaction struct {
 	Sender   string
 	Receiver string
-	Amount   string
+	Amount   int64
 }
 
 type Block struct {
@@ -27,13 +25,12 @@ func NewBlock(index int, prev [32]byte, nonce int64, tact []Transaction) Block {
 
 func NewFirstBlock() Block {
 	var noprev [32]byte
-	return NewBlock(0, noprev, 0, make([]Transaction, SIZE))
+	return NewBlock(0, noprev, 0, []Transaction{})
 }
 
 // eventually implement merkle tree
 func (b *Block) ComputeHash() [32]byte {
-	payload := string(b.Index) + b.TimeStamp.String() + string(b.PrevHash[:]) +
-		string(b.Nonce)
+	payload := string(b.Index) + b.TimeStamp.String() + string(b.PrevHash[:]) + string(b.Nonce)
 	return sha256.Sum256([]byte(payload))
 }
 
