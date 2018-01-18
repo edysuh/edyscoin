@@ -10,7 +10,7 @@ import (
 func TestNewBlockChain(t *testing.T) {
 	bc := NewBlockChain()
 
-	if bc.header == nil {
+	if bc.head == nil {
 		log.Fatal("NewBlockChain header not set properly")
 	}
 	if !reflect.DeepEqual(bc.transactions, []*Transaction{}) {

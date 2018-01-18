@@ -14,16 +14,12 @@ type Block struct {
 	transactions []*Transaction
 }
 
-// dooes block creation only occur within the chain,
-// thus this method should stay as a member of BlockChain?
 func NewBlock(prevHash [32]byte, nonce int64) Block {
 	return Block{time.Now(), prevHash, nonce, []*Transaction{} }
 }
 
-// get merkle root of transactions then hash the whole struct
-func (b *Block) CalculateHash() [32]byte {
-	// merkle := Merkle(b.transactions)
-	// marsh, err := json.Marshal(Block{b.timeStamp, b.prevHash, b.nonce, merkle})
+// TODO get merkle root of transactions then hash the whole struct
+func (b *Block) Hash() [32]byte {
 	marsh, err := json.Marshal(b)
 	if err != nil {
 		log.Fatal("error in marshalling into json")
