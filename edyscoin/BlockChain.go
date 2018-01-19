@@ -2,9 +2,10 @@ package edyscoin
 
 import (
 	"bytes"
+	"fmt"
 )
 
-var DIFFICULTY = 4
+var DIFFICULTY = 2
 
 type CBlock struct {
 	block *Block
@@ -18,7 +19,7 @@ type BlockChain struct {
 }
 
 func NewBlockChain() BlockChain {
-	// does the genesis block need proof of work?
+	// TODO does the genesis block need proof of work?
 	genesis := NewBlock([32]byte{}, 0) 
 	cblock := &CBlock{&genesis, (*CBlock)(nil)}
 	return BlockChain{cblock, cblock, []*Transaction{}}
@@ -29,24 +30,28 @@ func (bc *BlockChain) NewTransaction(tact Transaction) {
 }
 
 // validate the current transactions into a new block to the blockchain
-// hash the prev last block, generate a nonce, and check for valid proof
-func (bc *BlockChain) ProofOfWork() int64 {
+// hash the prev last block, generate a nonce (just zero for now),
+// and check for valid proof; append to chain and reset curr transactions
+func (bc *BlockChain) Mine() {
 	block := NewBlock(bc.tail.block.Hash(), (int64)(0))
-	block.transactions = bc.transactions
+	block.Transactions = bc.transactions
 
 	for !bc.ValidProof(block) {
-		block.nonce++
+		block.Nonce++
 	}
 
-	bc.transactions = []*Transaction{}
-	return block.nonce
+	bc.transactions = []*Transaction{&Transaction{"s1", "r1", 1000}}
+	cblock := &CBlock{&block, (*CBlock)(nil)}
+	bc.tail.next = cblock
+	bc.tail = cblock
 }
 
 // is valid proof if first D bytes are zeros, or the guessed hash < 2^(32-D),
 // where D is DIFFICULTY
 func (bc *BlockChain) ValidProof(block Block) bool {
 	guess := block.Hash()
-	if bytes.HasPrefix([]byte{}, guess[:DIFFICULTY]) {
+	fmt.Printf("%v %v\n", block.Nonce, guess)
+	if bytes.HasPrefix(make([]byte, 32), guess[:DIFFICULTY]) {
 		return true
 	}
 	return false
@@ -58,20 +63,11 @@ func (bc *BlockChain) ValidChain() bool {
 	curr := bc.head
 	for curr.next != nil {
 		currHash := curr.block.Hash()
-		if currHash != curr.next.block.prevHash ||
-				!bytes.HasPrefix([]byte{}, currHash[:DIFFICULTY]) {
+		if currHash != curr.next.block.PrevHash ||
+				!bytes.HasPrefix(make([]byte, 32), currHash[:DIFFICULTY]) {
 			return false
 		}
 		curr = curr.next
 	}
 	return true
 }
-
-// creates a new block with the current transactions and runs proof
-// of work to validate the new block into the chain
-// func (bc *BlockChain) Mine() {
-// 	block := NewBlock(bc.tail.block.Hash(), (int64)(0))
-// 	block.transactions = bc.transactions
-// 	bc.transactions = []*Transaction{}
-
-// }

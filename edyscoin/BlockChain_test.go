@@ -17,3 +17,16 @@ func TestNewBlockChain(t *testing.T) {
 		log.Fatal("NewBlockChain transactions slice not initialized properly")
 	}
 }
+
+func TestMine(t *testing.T) {
+	bc := NewBlockChain()
+	bc.Mine()
+}
+
+func TestValidProof(t *testing.T) {
+
+}
+
+func TestValidChain(t *testing.T) {
+
+}
