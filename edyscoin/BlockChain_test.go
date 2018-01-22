@@ -19,14 +19,16 @@ func TestNewBlockChain(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
+	t.Skip()
 	bc := NewBlockChain()
+	bc.SetDifficulty(2)
 	bc.Mine()
 }
 
 func TestValidProof(t *testing.T) {
-
+	t.Skip()
 }
 
 func TestValidChain(t *testing.T) {
-
+	t.Skip()
 }

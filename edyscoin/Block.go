@@ -22,8 +22,8 @@ func NewBlock(prevHash [32]byte, nonce int64) Block {
 func (b *Block) Hash() [32]byte {
 	marsh, err := json.Marshal(b)
 	if err != nil {
-		log.Fatal("error in marshalling into json")
+		log.Fatal("error in marshalling into json ->", err)
 	}
-	log.Printf("--------\nblock %+v marsh %s\n", b, marsh)
+	// log.Printf("--------\nblock %+v marsh %s\n", b, marsh)
 	return sha256.Sum256(marsh)
 }

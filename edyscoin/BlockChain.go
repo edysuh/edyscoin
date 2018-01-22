@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-var DIFFICULTY = 2
-
 type CBlock struct {
 	block *Block
 	next  *CBlock
@@ -15,14 +13,16 @@ type CBlock struct {
 type BlockChain struct {
 	head         *CBlock
 	tail         *CBlock
+	difficulty   int
 	transactions []*Transaction
 }
 
 func NewBlockChain() BlockChain {
+	diff := 4
 	// TODO does the genesis block need proof of work?
 	genesis := NewBlock([32]byte{}, 0) 
 	cblock := &CBlock{&genesis, (*CBlock)(nil)}
-	return BlockChain{cblock, cblock, []*Transaction{}}
+	return BlockChain{cblock, cblock, diff, []*Transaction{}}
 }
 
 func (bc *BlockChain) NewTransaction(tact Transaction) {
@@ -46,12 +46,16 @@ func (bc *BlockChain) Mine() {
 	bc.tail = cblock
 }
 
+func (bc *BlockChain) SetDifficulty(d int) {
+	bc.difficulty = d
+}
+
 // is valid proof if first D bytes are zeros, or the guessed hash < 2^(32-D),
-// where D is DIFFICULTY
+// where D is difficulty
 func (bc *BlockChain) ValidProof(block Block) bool {
 	guess := block.Hash()
 	fmt.Printf("%v %v\n", block.Nonce, guess)
-	if bytes.HasPrefix(make([]byte, 32), guess[:DIFFICULTY]) {
+	if bytes.HasPrefix(make([]byte, 32), guess[:bc.difficulty]) {
 		return true
 	}
 	return false
@@ -64,7 +68,7 @@ func (bc *BlockChain) ValidChain() bool {
 	for curr.next != nil {
 		currHash := curr.block.Hash()
 		if currHash != curr.next.block.PrevHash ||
-				!bytes.HasPrefix(make([]byte, 32), currHash[:DIFFICULTY]) {
+				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.difficulty]) {
 			return false
 		}
 		curr = curr.next
