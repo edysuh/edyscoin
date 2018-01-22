@@ -1,4 +1,4 @@
-package edyscoin
+package libedyscoin
 
 import (
 
