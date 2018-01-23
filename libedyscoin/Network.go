@@ -1,49 +1,66 @@
 package libedyscoin
 
 import (
-	// "io"
+	"fmt"
 	"log"
 	"net"
-	"strconv"
+	"net/http"
+	"net/rpc"
 )
 
-var id = 0
-
 type Node struct {
-	ID    int
-	peers []*net.Conn
+	Id          Id
+	Address		string
+	Peers       map[Id]string
+	// HandshakeCh chan HandshakeRequest
 }
 
-func NewNode(laddr string) Node {
-	n := Node{id, make([]*net.Conn, 0)}
-	id++
+func NewNode(laddr string) *Node {
+	n := new(Node)
+	n.Id = NewId(laddr)
+	n.Address = laddr
+	n.Peers = make(map[Id]string)
+	// n.HandshakeCh = make(chan HandshakeRequest)
+
+	rpc.Register(&RpcService{n})
+	rpc.HandleHTTP()
 	n.StartServer(laddr)
+
 	return n
 }
 
 func (n *Node) StartServer(laddr string) {
-	server, err := net.Listen("tcp", laddr)
+	listener, err := net.Listen("tcp", laddr)
 	if err != nil {
-		log.Fatalf("could not set up server at %s -> %v", laddr, err)
+		log.Fatalf("could not set up listener at %s -> %v", laddr, err)
 	}
-	for {
-		conn, err := server.Accept()
-		if err != nil {
-			log.Fatalf("could not accept connection from %v -> %v", conn, err)
-		}
-		n.peers = append(n.peers, &conn)
-	}
+	go http.Serve(listener, nil)
 }
 
-func (n *Node) ConnectToRemote(raddr string) *net.Conn {
-	conn, err := net.Dial("tcp", raddr)
+func (n *Node) ConnectToRemote(raddr string) *rpc.Client {
+	client, err := rpc.DialHTTP("tcp", raddr)
 	if err != nil {
-		log.Fatalf("could not connect to remote address %v -> %v", conn, err)
+		log.Fatalf("could not dial remote address %v -> %v", client, err)
 	}
-	return &conn
+	return client
 }
 
-func (n *Node) Handshake(raddr string) {
-	conn := n.ConnectToRemote(raddr)
-	(*conn).Write([]byte(strconv.Itoa(n.ID)))
+// func (n *Node) RequestHandler() {
+// 	select {
+// 	case req := <-n.HandshakeCh:
+// 		fmt.Printf("%v\n", req)
+// 	}
+// }
+
+func (n *Node) DoHandshake(raddr string) {
+	client := n.ConnectToRemote(raddr)
+	req := HandshakeRequest{n.Id, n.Address}
+	var res HandshakeResponse
+
+	err := client.Call("tcp", req, res)
+	if err != nil {
+		log.Fatal("DoHandshake Error: ", err)
+	}
+
+	fmt.Printf("%v\n", req)
 }
