@@ -1,7 +1,7 @@
 package libedyscoin
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 	"net"
 	"net/http"
@@ -17,9 +17,9 @@ type Node struct {
 
 func NewNode(laddr string) *Node {
 	n := new(Node)
-	n.Id = NewId(laddr)
-	n.Address = laddr
-	n.Peers = make(map[Id]string)
+	n.Id       = NewId(laddr)
+	n.Address  = laddr
+	n.Peers    = make(map[Id]string)
 	// n.HandshakeCh = make(chan HandshakeRequest)
 
 	rpc.Register(&RpcService{n})
@@ -52,15 +52,23 @@ func (n *Node) ConnectToRemote(raddr string) *rpc.Client {
 // 	}
 // }
 
-func (n *Node) DoHandshake(raddr string) {
+func (n *Node) DoHandshake(raddr string) (*HandshakeResponse, error) {
+	// fmt.Printf("from hs: %v, %v\n", n.Id, n.Address)
+
 	client := n.ConnectToRemote(raddr)
 	req := HandshakeRequest{n.Id, n.Address}
 	var res HandshakeResponse
 
-	err := client.Call("tcp", req, res)
+	err := client.Call("RpcService.Handshake", req, &res)
 	if err != nil {
 		log.Fatal("DoHandshake Error: ", err)
 	}
 
-	fmt.Printf("%v\n", req)
+	// fmt.Printf("response from DoHandshake: %v\n", res)
+	return &res, nil
+}
+
+func (n *Node) DoHandshakeWithId(Id Id) {
+	raddr := n.Peers[Id]
+	n.DoHandshake(raddr)
 }
