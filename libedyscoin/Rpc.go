@@ -18,8 +18,20 @@ type HandshakeResponse struct {
 	Address string
 }
 
-func (rs *RpcService) Handshake(req HandshakeRequest, res *HandshakeResponse) error {
-	rs.node.Peers[req.NodeId] = req.Address
-	*res = HandshakeResponse{rs.node.Id, rs.node.Address}
+func (rpcs *RpcService) Handshake(req HandshakeRequest, res *HandshakeResponse) error {
+	rpcs.node.Peers[req.NodeId] = req.Address
+	*res = HandshakeResponse{rpcs.node.Id, rpcs.node.Address}
+	return nil
+}
+
+type BroadcastRequest struct {
+
+}
+
+type BroadcastResponse struct {
+
+}
+
+func (rpcs *RpcService) Broadcast(req BroadcastRequest, res *BroadcastResponse) error {
 	return nil
 }

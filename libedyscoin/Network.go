@@ -1,7 +1,7 @@
 package libedyscoin
 
 import (
-	// "fmt"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -37,12 +37,12 @@ func (n *Node) StartServer(laddr string) {
 	go http.Serve(listener, nil)
 }
 
-func (n *Node) ConnectToRemote(raddr string) *rpc.Client {
+func (n *Node) ConnectToRemote(raddr string) (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", raddr)
 	if err != nil {
-		log.Fatalf("could not dial remote address %v -> %v", client, err)
+		err = fmt.Errorf("remote node offline or incorrect address: %v\n", err)
 	}
-	return client
+	return client, err
 }
 
 // func (n *Node) RequestHandler() {
@@ -53,22 +53,39 @@ func (n *Node) ConnectToRemote(raddr string) *rpc.Client {
 // }
 
 func (n *Node) DoHandshake(raddr string) (*HandshakeResponse, error) {
-	// fmt.Printf("from hs: %v, %v\n", n.Id, n.Address)
-
-	client := n.ConnectToRemote(raddr)
+	client, err := n.ConnectToRemote(raddr)
+	if err != nil {
+		return nil, err
+	}
 	req := HandshakeRequest{n.Id, n.Address}
 	var res HandshakeResponse
 
-	err := client.Call("RpcService.Handshake", req, &res)
-	if err != nil {
-		log.Fatal("DoHandshake Error: ", err)
+	handshakeCall := client.Go("RpcService.Handshake", req, &res, nil)
+	resCall := <-handshakeCall.Done
+	if resCall.Error != nil {
+		log.Fatal(resCall.Error)
 	}
 
-	// fmt.Printf("response from DoHandshake: %v\n", res)
 	return &res, nil
 }
 
-func (n *Node) DoHandshakeWithId(Id Id) {
-	raddr := n.Peers[Id]
-	n.DoHandshake(raddr)
+// TODO how do do lookups for nodes outside peer list?
+func (n *Node) DoHandshakeWithId(Id Id) (*HandshakeResponse, error) {
+	if raddr, ok := n.Peers[Id]; ok {
+		return n.DoHandshake(raddr)
+	}
+	return nil, fmt.Errorf("node with this address is not a peer")
+}
+
+func (n *Node) DoBroadcast(method string, args interface{}) (*BroadcastResponse, error) {
+	return nil, nil
+}
+
+func (n *Node) DoBroadcastNewTransaction(txn *Transaction) (*BroadcastResponse, error) {
+
+	return nil, nil
+}
+
+func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) (*BroadcastResponse, error) {
+	return nil, nil
 }

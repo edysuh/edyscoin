@@ -25,8 +25,8 @@ func NewBlockChain() BlockChain {
 	return BlockChain{cblock, cblock, diff, []*Transaction{}}
 }
 
-func (bc *BlockChain) NewTransaction(tact Transaction) {
-	bc.transactions = append(bc.transactions, &tact)
+func (bc *BlockChain) NewTransaction(txn Transaction) {
+	bc.transactions = append(bc.transactions, &txn)
 }
 
 // validate the current transactions into a new block to the blockchain

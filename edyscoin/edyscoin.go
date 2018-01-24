@@ -10,18 +10,19 @@ import (
 	"strings"
 )
 
-// start the first node with `./edyscoin [local addr:port] [remote addr:port]`
+// start the first node with `./edyscoin [local host:port] [remote host:port]`
 func main() {
 	flag.Parse()
 	args := flag.Args()
 
 	if len(args) != 2 {
-		log.Fatal("improper usage: ./edyscoin [local address:port] " +
-			"[remote addr:port]")
+		log.Fatal("improper usage: ./edyscoin [local host:port] " +
+			"[remote host:port]")
 	}
 
 	lnode := libedyscoin.NewNode(args[0])
-	fmt.Printf("from main: %v, %v\n", lnode.Id, lnode.Address)
+	fmt.Printf("local node id and address: %v, %v\n", lnode.Id, lnode.Address)
+
 	startCLI(lnode)
 }
 
@@ -32,7 +33,7 @@ func startCLI(lnode *libedyscoin.Node) {
 		fmt.Print("edyscoin > ")
 		line, err := input.ReadString('\n')
 		if err != nil {
-			log.Fatal("input error", err)
+			log.Fatal("input error: ", err)
 		}
 		if line == "" {
 			continue
@@ -41,7 +42,7 @@ func startCLI(lnode *libedyscoin.Node) {
 		resp := executeLine(lnode, line)
 		if resp == "quit" {
 			quit = true
-		} else {
+		} else if resp != "" {
 			fmt.Printf("%s\n", resp)
 		}
 	}
@@ -58,11 +59,15 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 	case "exit":
 		return "quit"
 	case "handshake":
+		if len(toks) != 2 {
+			return "ERR -> usage: `handshake [remote node host:port]`"
+		}
 		res, err := lnode.DoHandshake(toks[1])
 		if err != nil {
-			log.Fatal("error in handshake", err)
+			return "ERR -> remote node offline or incorrect address"
 		}
-		return "OK: "+ res.NodeId.String() + " " + res.Address
+		return "OK -> response from node id:\n"+ res.NodeId.ToString() +
+			"\nfrom addr: " + res.Address
 	}
-	return "ERR: command not recognized"
+	return "ERR -> command not recognized"
 }
