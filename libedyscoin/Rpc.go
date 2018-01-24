@@ -24,14 +24,30 @@ func (rpcs *RpcService) Handshake(req HandshakeRequest, res *HandshakeResponse) 
 	return nil
 }
 
-type BroadcastRequest struct {
+// TODO change this to a struct that includes a TTL
+type bId Id		// BroadcastId
 
+type BroadcastRequest struct {
+	BId  bId
+	Args interface{}
 }
 
 type BroadcastResponse struct {
+	BId     bId
+	ResNode Id
+}
 
+type TransactionBroadcast struct {
+	Seen map[Id]bool
 }
 
 func (rpcs *RpcService) Broadcast(req BroadcastRequest, res *BroadcastResponse) error {
+	breq := req.(BroadcastRequest)
+	if id, ok := req.Args.Seen; ok {
+		for _, node := range rpcs.node.Peers {
+
+		}
+
+	}
 	return nil
 }

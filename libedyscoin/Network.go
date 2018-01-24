@@ -12,6 +12,7 @@ type Node struct {
 	Id          Id
 	Address		string
 	Peers       map[Id]string
+	// Marks		map[bId]bool
 	// HandshakeCh chan HandshakeRequest
 }
 
@@ -77,7 +78,7 @@ func (n *Node) DoHandshakeWithId(Id Id) (*HandshakeResponse, error) {
 	return nil, fmt.Errorf("node with this address is not a peer")
 }
 
-func (n *Node) DoBroadcast(method string, args interface{}) (*BroadcastResponse, error) {
+func (n *Node) DoBroadcast(method string, args struct{}) (*BroadcastResponse, error) {
 	return nil, nil
 }
 
