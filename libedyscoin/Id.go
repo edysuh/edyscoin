@@ -1,6 +1,7 @@
 package libedyscoin
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"time"
@@ -16,4 +17,10 @@ func NewId(addr string) Id {
 
 func (id *Id) ToString() string {
 	return fmt.Sprintf("%v", *id)
+}
+
+func (id *Id) Equals(o Id) bool {
+	a := ([IdBytes]byte)(*id)
+	b := ([IdBytes]byte)(o)
+	return bytes.Equal(a[:], b[:])
 }
