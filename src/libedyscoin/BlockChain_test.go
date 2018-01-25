@@ -19,7 +19,7 @@ func TestNewBlockChain(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
-	t.Skip()
+	// t.Skip()
 	bc := NewBlockChain()
 	bc.SetDifficulty(2)
 	bc.Mine()

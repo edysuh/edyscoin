@@ -8,10 +8,10 @@ import (
 )
 
 type Block struct {
-	TimeStamp    time.Time      //`json:ts`
-	PrevHash     [32]byte       //`json:ph`
-	Nonce        int64          //`json:nc`
-	Transactions []*Transaction //`json:tx`
+	TimeStamp    time.Time      `json:"ts"`
+	PrevHash     [32]byte       `json:"ph"`
+	Nonce        int64          `json:"nc"`
+	Transactions []*Transaction `json:"tx"`
 }
 
 func NewBlock(prevHash [32]byte, nonce int64) Block {

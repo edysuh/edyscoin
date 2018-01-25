@@ -1,6 +1,7 @@
 package libedyscoin
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -12,6 +13,7 @@ type Node struct {
 	Id          Id
 	Address		string
 	Peers       map[Id]string
+	BlockChain  *BlockChain
 }
 
 func NewNode(laddr string) *Node {
@@ -19,6 +21,7 @@ func NewNode(laddr string) *Node {
 	n.Id       = NewId(laddr)
 	n.Address  = laddr
 	n.Peers    = make(map[Id]string)
+	n.BlockChain    = NewBlockChain()
 
 	rpc.Register(&RpcService{n})
 	rpc.HandleHTTP()
@@ -69,26 +72,37 @@ func (n *Node) DoHandshake(raddr string) (*Message, error) {
 	return res, err
 }
 
-// TODO should return some sort of success i.e. the array of nodes broadcasted to
-func (n *Node) DoBroadcast(req *Message) {
-	req.Seenlist[n.Id] = true
+func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
+	req.Params.Seenlist[n.Id] = true
 	for rid, raddr := range n.Peers {
-		go func(rid Id, raddr string) {
-			if !n.Id.Equals(rid) && !req.Seenlist[rid] {
-				_, err := n.RpcCall(raddr, "Broadcast", req)
+		// go TODO goroutine: should return the array of nodes broadcasted to
+		func(rid Id, raddr string) {
+			if !n.Id.Equals(rid) && !req.Params.Seenlist[rid] {
+				res, err := n.RpcCall(raddr, "Broadcast", req)
 				if err != nil {
 					fmt.Println(err)
 				}
+				req.Params.Success = append(req.Params.Success, res.SenderId)
 			}
 		}(rid, raddr)
 	}
+	return req.Params.Success, nil
 }
 
 func (n *Node) DoBroadcastNewTransaction(txn *Transaction) (*Message, error) {
-
+	marsh, err := json.Marshal(txn)
+	if err != nil {
+		log.Fatal("error in marshalling into json ->", err)
+	}
+	n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
 	return nil, nil
 }
 
 func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) (*Message, error) {
+	marsh, err := json.Marshal(bc)
+	if err != nil {
+		log.Fatal("error in marshalling into json ->", err)
+	}
+	n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
 	return nil, nil
 }

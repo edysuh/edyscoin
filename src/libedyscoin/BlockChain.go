@@ -17,12 +17,12 @@ type BlockChain struct {
 	transactions []*Transaction
 }
 
-func NewBlockChain() BlockChain {
+func NewBlockChain() *BlockChain {
 	diff := 4
 	// TODO does the genesis block need proof of work?
 	genesis := NewBlock([32]byte{}, 0) 
 	cblock := &CBlock{&genesis, (*CBlock)(nil)}
-	return BlockChain{cblock, cblock, diff, []*Transaction{}}
+	return &BlockChain{cblock, cblock, diff, []*Transaction{}}
 }
 
 func (bc *BlockChain) NewTransaction(txn Transaction) {
