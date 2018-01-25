@@ -58,6 +58,7 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		fallthrough
 	case "exit":
 		return "quit"
+
 	case "handshake":
 		if len(toks) != 2 {
 			return "ERR -> usage: `handshake [remote node host:port]`"
@@ -66,8 +67,20 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		if err != nil {
 			return "ERR -> remote node offline or incorrect address"
 		}
-		return "OK -> response from node id:\n"+ res.NodeId.ToString() +
-			"\nfrom addr: " + res.Address
+		return "OK -> response from node id:\n"+ res.SenderId.ToString() +
+			" from addr: " + res.SenderAddr
+
+	case "broadcast":
+		if len(toks) != 2 {
+			return "ERR -> usage: `broadcast [string]`"
+		}
+		var q struct{}
+		lnode.DoBroadcast(toks[1], q, make(map[libedyscoin.Id]bool))
+		// res, err := lnode.DoBroadcast(toks[1], q, make(map[libedyscoin.Id]bool))
+		// if err != nil {
+		// 	return "broadcast error"
+		// }
+		// return "OK -> broadcast to all nodes:\n" + res.ResNode.ToString()
 	}
 	return "ERR -> command not recognized"
 }
