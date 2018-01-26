@@ -69,6 +69,7 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 	if err := json.Unmarshal(req.Params.Payload, txn); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("%+v\n", txn)
 	rpcs.node.BlockChain.NewTransaction(*txn)
 
 	_, err := rpcs.node.DoBroadcastNewTransaction(txn)
@@ -84,6 +85,7 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 	return nil
 }
 
+// TODO WHOS BLOCKCHAIN ARE WE USING?? SHOULDNT INITIALIZE A NEW BLOCKCHAIN FOR EVERY NODE
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
 	var remotebc *BlockChain

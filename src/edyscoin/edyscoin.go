@@ -7,6 +7,7 @@ import (
 	"log"
 	"flag"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -21,6 +22,7 @@ func main() {
 	}
 
 	lnode := libedyscoin.NewNode(args[0])
+	fmt.Println("Blockchain:")
 	lnode.BlockChain.DisplayBlockChain()
 	fmt.Printf("local node id and address: %+v\n", lnode)
 	res, err := lnode.DoHandshake(args[1])
@@ -66,7 +68,7 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 
 	case "list":
 		if len(toks) != 2 {
-			return "ERR-> usage: `list [peers|transactions|blockchain]`"
+			return "ERR-> usage: `list [peers|transaction|blockchain]`"
 		}
 		if toks[1] == "peers" {
 			str := ""
@@ -74,12 +76,12 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 				str += fmt.Sprintf("%+v %+v\n", k, v)
 			}
 			return str
-		} else if toks[1] == "transactions" {
+		} else if toks[1] == "transaction" {
 			lnode.BlockChain.ListTransactions()
 		} else if toks[1] == "blockchain" {
 			lnode.BlockChain.DisplayBlockChain()
 		} else {
-			return "ERR-> usage: `list [peers|transactions|blockchain]`"
+			return "ERR-> usage: `list [peers|transaction|blockchain]`"
 		}
 		return ""
 
@@ -103,7 +105,21 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		return "OK-> broadcast to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 
 	case "transaction":
-		return ""
+		if len(toks) != 4 {
+			return "ERR-> usage: `transaction [sender] [recipient] [amount]`"
+		}
+		amount, err := strconv.ParseInt(toks[3], 10, 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+		txn := &libedyscoin.Transaction{
+			Sender:    toks[1],
+			Recipient: toks[2],
+			Amount:    amount,
+		}
+		lnode.BlockChain.NewTransaction(*txn)
+		rnodes, _ := lnode.DoBroadcastNewTransaction(txn)
+		return "OK-> broadcasted a transaction to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 
 	case "mine":
 		if len(toks) != 1 {

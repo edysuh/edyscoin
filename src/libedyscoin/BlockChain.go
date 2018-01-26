@@ -19,8 +19,8 @@ type BlockChain struct {
 	transactions []*Transaction
 }
 
+// TODO does the genesis block need proof of work?
 func NewBlockChain() *BlockChain {
-	// TODO does the genesis block need proof of work?
 	genesis := NewBlock([32]byte{}, 0)
 	cblock := &CBlock{&genesis, (*CBlock)(nil)}
 	return &BlockChain{cblock, cblock, DIFFICULTY, []*Transaction{}}
@@ -31,15 +31,19 @@ func (bc *BlockChain) NewTransaction(txn Transaction) {
 }
 
 func (bc *BlockChain) DisplayBlockChain() {
-	for curr := bc.head; curr.next != nil; curr = curr.next {
-		fmt.Printf("%+v\n", curr.block)
+	for curr := bc.head; curr != nil; curr = curr.next {
+		fmt.Printf("%+v\n", *curr.block)
 	}
 }
 
 func (bc *BlockChain) ListTransactions() {
 	for _, txn := range bc.transactions {
-		fmt.Printf("%+v\n", txn)
+		fmt.Printf("%+v\n", *txn)
 	}
+}
+
+func (bc *BlockChain) SetDifficulty(d int) {
+	bc.difficulty = d
 }
 
 // validate the current transactions into a new block to the blockchain
@@ -60,10 +64,6 @@ func (bc *BlockChain) Mine() bool {
 	return true
 }
 
-func (bc *BlockChain) SetDifficulty(d int) {
-	bc.difficulty = d
-}
-
 // is valid proof if first D bytes are zeros, or the guessed hash < 2^(32-D),
 // where D is difficulty
 func (bc *BlockChain) ValidProof(block Block) bool {
@@ -79,7 +79,7 @@ func (bc *BlockChain) ValidProof(block Block) bool {
 // and the correct nonce to solve proof of work
 func (bc *BlockChain) ValidChain() bool {
 	// curr := bc.head
-	for curr := bc.head; curr.next != nil; curr = curr.next {
+	for curr := bc.head; curr != nil; curr = curr.next {
 		currHash := curr.block.Hash()
 		if currHash != curr.next.block.PrevHash ||
 				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.difficulty]) {
@@ -90,19 +90,21 @@ func (bc *BlockChain) ValidChain() bool {
 	return true
 }
 
+// check if other blockchain longer than ours
+// consensus dictates the longer chain is the correct chain
 func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
 	if !bcB.ValidChain() {
 		return fmt.Errorf("ERR: new blockchain is not valid!!")
 	}
 
 	Acurr, Bcurr := bcA.head, bcB.head
-	for Acurr.next != nil || Bcurr.next != nil {
-		if Acurr.next == nil {
+	for Acurr != nil || Bcurr != nil {
+		if Acurr == nil {
 			bcA.ReplaceChain(bcB)
-		} else if Bcurr.next == nil {
+		} else if Bcurr == nil {
 			return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
 		}
-		Acurr, Bcurr = Acurr.next, Bcurr.next
+		Acurr, Bcurr = Acurr.next , Bcurr.next 
 	}
 
 	return nil

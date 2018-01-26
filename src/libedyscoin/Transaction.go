@@ -4,9 +4,9 @@ import (
 
 )
 
-// TODO sender/receipient secure data type
+// TODO sender/recipient secure data type
 type Transaction struct {
-	sender     string
-	receipient string
-	amount     int64
+	Sender     string
+	Recipient  string
+	Amount     int64
 }
