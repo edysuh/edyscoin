@@ -17,11 +17,12 @@ type Node struct {
 }
 
 func NewNode(laddr string) *Node {
-	n := new(Node)
-	n.Id       = NewId(laddr)
-	n.Address  = laddr
-	n.Peers    = make(map[Id]string)
-	n.BlockChain    = NewBlockChain()
+	n := &Node{
+		Id:         NewId(laddr),
+		Address:    laddr,
+		Peers:      make(map[Id]string),
+		BlockChain: NewBlockChain(),
+	}
 
 	rpc.Register(&RpcService{n})
 	rpc.HandleHTTP()
@@ -72,11 +73,20 @@ func (n *Node) DoHandshake(raddr string) (*Message, error) {
 	return res, err
 }
 
+// TODO should return the array of ALL nodes broadcasted to, not just peers
+// need to execute anonymous func in for loop as goroutine and set up channels
+// to access data without race conditions
 func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
+	if req.Params.Seenlist == nil {
+		req.Params.Seenlist = make(map[Id]bool)
+	}
+	if req.Params.Success == nil {
+		req.Params.Success = make([]Id, 0)
+	}
+
 	req.Params.Seenlist[n.Id] = true
 	for rid, raddr := range n.Peers {
-		// go TODO goroutine: should return the array of nodes broadcasted to
-		func(rid Id, raddr string) {
+		/*go*/ func(rid Id, raddr string) {
 			if !n.Id.Equals(rid) && !req.Params.Seenlist[rid] {
 				res, err := n.RpcCall(raddr, "Broadcast", req)
 				if err != nil {
@@ -89,20 +99,21 @@ func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
 	return req.Params.Success, nil
 }
 
-func (n *Node) DoBroadcastNewTransaction(txn *Transaction) (*Message, error) {
+func (n *Node) DoBroadcastNewTransaction(txn *Transaction) ([]Id, error) {
 	marsh, err := json.Marshal(txn)
 	if err != nil {
 		log.Fatal("error in marshalling into json ->", err)
 	}
-	n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
-	return nil, nil
+	res, err := n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
+	return res, nil
 }
 
-func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) (*Message, error) {
+func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) ([]Id, error) {
+	bc.DisplayBlockChain()
 	marsh, err := json.Marshal(bc)
 	if err != nil {
 		log.Fatal("error in marshalling into json ->", err)
 	}
-	n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
-	return nil, nil
+	res, err := n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
+	return res, nil
 }

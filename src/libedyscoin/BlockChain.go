@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var DIFFICULTY int = 2
+
 type CBlock struct {
 	block *Block
 	next  *CBlock
@@ -18,21 +20,32 @@ type BlockChain struct {
 }
 
 func NewBlockChain() *BlockChain {
-	diff := 4
 	// TODO does the genesis block need proof of work?
-	genesis := NewBlock([32]byte{}, 0) 
+	genesis := NewBlock([32]byte{}, 0)
 	cblock := &CBlock{&genesis, (*CBlock)(nil)}
-	return &BlockChain{cblock, cblock, diff, []*Transaction{}}
+	return &BlockChain{cblock, cblock, DIFFICULTY, []*Transaction{}}
 }
 
 func (bc *BlockChain) NewTransaction(txn Transaction) {
 	bc.transactions = append(bc.transactions, &txn)
 }
 
+func (bc *BlockChain) DisplayBlockChain() {
+	for curr := bc.head; curr.next != nil; curr = curr.next {
+		fmt.Printf("%+v\n", curr.block)
+	}
+}
+
+func (bc *BlockChain) ListTransactions() {
+	for _, txn := range bc.transactions {
+		fmt.Printf("%+v\n", txn)
+	}
+}
+
 // validate the current transactions into a new block to the blockchain
 // hash the prev last block, generate a nonce (just zero for now),
 // and check for valid proof; append to chain and reset curr transactions
-func (bc *BlockChain) Mine() {
+func (bc *BlockChain) Mine() bool {
 	block := NewBlock(bc.tail.block.Hash(), (int64)(0))
 	block.Transactions = bc.transactions
 
@@ -44,6 +57,7 @@ func (bc *BlockChain) Mine() {
 	cblock := &CBlock{&block, (*CBlock)(nil)}
 	bc.tail.next = cblock
 	bc.tail = cblock
+	return true
 }
 
 func (bc *BlockChain) SetDifficulty(d int) {
@@ -61,17 +75,39 @@ func (bc *BlockChain) ValidProof(block Block) bool {
 	return false
 }
 
-// is valid chain if every block has the correct prev hash, 
+// is valid chain if every block has the correct prev hash,
 // and the correct nonce to solve proof of work
 func (bc *BlockChain) ValidChain() bool {
-	curr := bc.head
-	for curr.next != nil {
+	// curr := bc.head
+	for curr := bc.head; curr.next != nil; curr = curr.next {
 		currHash := curr.block.Hash()
 		if currHash != curr.next.block.PrevHash ||
 				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.difficulty]) {
 			return false
 		}
-		curr = curr.next
+		// curr = curr.next
 	}
 	return true
+}
+
+func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
+	if !bcB.ValidChain() {
+		return fmt.Errorf("ERR: new blockchain is not valid!!")
+	}
+
+	Acurr, Bcurr := bcA.head, bcB.head
+	for Acurr.next != nil || Bcurr.next != nil {
+		if Acurr.next == nil {
+			bcA.ReplaceChain(bcB)
+		} else if Bcurr.next == nil {
+			return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
+		}
+		Acurr, Bcurr = Acurr.next, Bcurr.next
+	}
+
+	return nil
+}
+
+func (bcA *BlockChain) ReplaceChain(bcB *BlockChain) {
+	bcA.head, bcA.tail = bcB.head, bcB.tail
 }

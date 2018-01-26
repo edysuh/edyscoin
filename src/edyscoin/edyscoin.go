@@ -21,7 +21,8 @@ func main() {
 	}
 
 	lnode := libedyscoin.NewNode(args[0])
-	fmt.Printf("local node id and address: %v, %v\n", lnode.Id, lnode.Address)
+	lnode.BlockChain.DisplayBlockChain()
+	fmt.Printf("local node id and address: %+v\n", lnode)
 	res, err := lnode.DoHandshake(args[1])
 	if err != nil {
 		log.Fatal("ERR-> remote node offline or incorrect address")
@@ -63,12 +64,24 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 	case "exit":
 		return "quit"
 
-	case "peers":
-		str := ""
-		for k, v := range lnode.Peers {
-			str += fmt.Sprintf("%+v %+v\n", k, v)
+	case "list":
+		if len(toks) != 2 {
+			return "ERR-> usage: `list [peers|transactions|blockchain]`"
 		}
-		return str
+		if toks[1] == "peers" {
+			str := ""
+			for k, v := range lnode.Peers {
+				str += fmt.Sprintf("%+v %+v\n", k, v)
+			}
+			return str
+		} else if toks[1] == "transactions" {
+			lnode.BlockChain.ListTransactions()
+		} else if toks[1] == "blockchain" {
+			lnode.BlockChain.DisplayBlockChain()
+		} else {
+			return "ERR-> usage: `list [peers|transactions|blockchain]`"
+		}
+		return ""
 
 	case "handshake":
 		if len(toks) != 2 {
@@ -85,13 +98,23 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		if len(toks) != 2 {
 			return "ERR-> usage: `broadcast [string]`"
 		}
-		msg := libedyscoin.NewMessage(lnode, libedyscoin.Params{
-			Payload: ([]byte)(toks[1]),
-			Seenlist: make(map[libedyscoin.Id]bool),
-			Success: make([]libedyscoin.Id, 0),
-		})
+		msg := libedyscoin.NewMessage(lnode, libedyscoin.Params{Payload: ([]byte)(toks[1])})
 		rnodes, _ := lnode.DoBroadcast(msg)
 		return "OK-> broadcast to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
+
+	case "transaction":
+		return ""
+
+	case "mine":
+		if len(toks) != 1 {
+			return "ERR-> usage: `mine`"
+		}
+		mined := lnode.BlockChain.Mine()
+		if mined {
+			fmt.Printf("OK-> mined a new block!\n")
+			rnodes, _ := lnode.DoBroadcastNewBlockChain(lnode.BlockChain)
+			return "OK-> broadcasted new block to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
+		}
 	}
 
 	return "ERR-> command not recognized"
