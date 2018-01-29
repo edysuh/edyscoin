@@ -22,15 +22,14 @@ func main() {
 	}
 
 	lnode := libedyscoin.NewNode(args[0])
-	fmt.Println("Blockchain:")
-	lnode.BlockChain.DisplayBlockChain()
-	fmt.Printf("local node id and address: %+v\n", lnode)
+	fmt.Printf("local node: %+v\n", lnode)
 	res, err := lnode.DoHandshake(args[1])
 	if err != nil {
 		log.Fatal("ERR-> remote node offline or incorrect address")
 	}
-	lnode.DoSyncBlockChain(args[1])
 	fmt.Print("OK-> resp: "+ res.SenderId.ToString() + " from addr: " + res.SenderAddr + "\n")
+
+	lnode.DoSyncBlockChain(args[1])
 
 	startCLI(lnode)
 }
@@ -77,9 +76,9 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 				str += fmt.Sprintf("%+v %+v\n", k, v)
 			}
 			return str
-		} else if toks[1] == "transaction" {
+		} else if toks[1] == "transaction" || toks[1] == "txn" {
 			lnode.BlockChain.ListTransactions()
-		} else if toks[1] == "blockchain" {
+		} else if toks[1] == "blockchain" || toks[1] == "bc" {
 			lnode.BlockChain.DisplayBlockChain()
 		} else {
 			return "ERR-> usage: `list [peers|transaction|blockchain]`"
@@ -101,10 +100,12 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		if len(toks) != 2 {
 			return "ERR-> usage: `broadcast [string]`"
 		}
-		msg := libedyscoin.NewMessage(lnode, "broadcast")
+		msg := libedyscoin.NewMessage(lnode, "Broadcast")
 		rnodes, _ := lnode.DoBroadcast(msg)
 		return "OK-> broadcast to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 
+	case "txn":
+		fallthrough
 	case "transaction":
 		if len(toks) != 4 {
 			return "ERR-> usage: `transaction [sender] [recipient] [amount]`"

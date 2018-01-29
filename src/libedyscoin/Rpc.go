@@ -78,21 +78,13 @@ func (rpcs *RpcService) Broadcast(req Message, res *Message) error {
 func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error {
 	txn := &req.Params.Transaction
 	rpcs.node.BlockChain.NewTransaction(txn)
+	fmt.Println("list txn: ")
+	rpcs.node.BlockChain.ListTransactions()
 
-	_, err := rpcs.node.DoBroadcastNewTransaction(txn)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	*res = Message{
-		MsgId:      req.MsgId,
-		SenderId:   rpcs.node.Id,
-		SenderAddr: rpcs.node.Address,
-	}
+	rpcs.Broadcast(req, res)
 	return nil
 }
 
-// TODO WHOS BLOCKCHAIN ARE WE USING?? SHOULDNT INITIALIZE A NEW BLOCKCHAIN FOR EVERY NODE
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
 	remotebc := &req.Params.BlockChain
@@ -101,15 +93,6 @@ func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error 
 		log.Fatal(err)
 	}
 
-	_, err := rpcs.node.DoBroadcastNewBlockChain(remotebc)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	*res = Message{
-		MsgId:      req.MsgId,
-		SenderId:   rpcs.node.Id,
-		SenderAddr: rpcs.node.Address,
-	}
+	rpcs.Broadcast(req, res)
 	return nil
 }

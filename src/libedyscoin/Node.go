@@ -61,7 +61,7 @@ func (n *Node) RpcCall(raddr string, method string, req *Message) (*Message, err
 }
 
 func (n *Node) DoHandshake(raddr string) (*Message, error) {
-	req := NewMessage(n, "handshake")
+	req := NewMessage(n, "Handshake")
 	res, err := n.RpcCall(raddr, "Handshake", req)
 	if err != nil {
 		log.Fatal(err)
@@ -76,7 +76,7 @@ func (n *Node) DoHandshake(raddr string) (*Message, error) {
 }
 
 func (n *Node) DoSyncBlockChain(raddr string) error {
-	req := NewMessage(n, "sync")
+	req := NewMessage(n, "SyncBlockChain")
 	res, err := n.RpcCall(raddr, "SyncBlockChain", req)
 	if err != nil {
 		return err
@@ -89,6 +89,9 @@ func (n *Node) DoSyncBlockChain(raddr string) error {
 // need to execute anonymous func in for loop as goroutine and set up channels
 // to access data without race conditions
 func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
+	if req.Method == "" {
+		req.Method = "Broadcast"
+	}
 	if req.Params.Seenlist == nil {
 		req.Params.Seenlist = make(map[Id]bool)
 	}
@@ -100,7 +103,7 @@ func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
 	for rid, raddr := range n.Peers {
 		/*go*/ func(rid Id, raddr string) {
 			if !n.Id.Equals(rid) && !req.Params.Seenlist[rid] {
-				res, err := n.RpcCall(raddr, "Broadcast", req)
+				res, err := n.RpcCall(raddr, req.Method, req)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -112,9 +115,9 @@ func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
 }
 
 func (n *Node) DoBroadcastNewTransaction(txn *Transaction) ([]Id, error) {
-	return n.DoBroadcast(NewMessage(n, "broadcasttxn", Params{Transaction: *txn}))
+	return n.DoBroadcast(NewMessage(n, "BroadcastNewTransaction", Params{Transaction: *txn}))
 }
 
 func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) ([]Id, error) {
-	return n.DoBroadcast(NewMessage(n, "broadcastbc", Params{BlockChain: *bc}))
+	return n.DoBroadcast(NewMessage(n, "BroadcastNewBlockChain", Params{BlockChain: *bc}))
 }
