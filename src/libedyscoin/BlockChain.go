@@ -8,15 +8,15 @@ import (
 var DIFFICULTY int = 2
 
 type CBlock struct {
-	block *Block
-	next  *CBlock
+	Block *Block
+	Next  *CBlock
 }
 
 type BlockChain struct {
-	head         *CBlock
-	tail         *CBlock
-	difficulty   int
-	transactions []*Transaction
+	Head         *CBlock
+	Tail         *CBlock
+	Difficulty   int
+	Transactions []*Transaction
 }
 
 // TODO does the genesis block need proof of work?
@@ -26,41 +26,41 @@ func NewBlockChain() *BlockChain {
 	return &BlockChain{cblock, cblock, DIFFICULTY, []*Transaction{}}
 }
 
-func (bc *BlockChain) NewTransaction(txn Transaction) {
-	bc.transactions = append(bc.transactions, &txn)
+func (bc *BlockChain) NewTransaction(txn *Transaction) {
+	bc.Transactions = append(bc.Transactions, txn)
 }
 
 func (bc *BlockChain) DisplayBlockChain() {
-	for curr := bc.head; curr != nil; curr = curr.next {
-		fmt.Printf("%+v\n", *curr.block)
+	for curr := bc.Head; curr != nil; curr = curr.Next {
+		fmt.Printf("%+v\n", *curr.Block)
 	}
 }
 
 func (bc *BlockChain) ListTransactions() {
-	for _, txn := range bc.transactions {
+	for _, txn := range bc.Transactions {
 		fmt.Printf("%+v\n", *txn)
 	}
 }
 
 func (bc *BlockChain) SetDifficulty(d int) {
-	bc.difficulty = d
+	bc.Difficulty = d
 }
 
 // validate the current transactions into a new block to the blockchain
 // hash the prev last block, generate a nonce (just zero for now),
 // and check for valid proof; append to chain and reset curr transactions
 func (bc *BlockChain) Mine() bool {
-	block := NewBlock(bc.tail.block.Hash(), (int64)(0))
-	block.Transactions = bc.transactions
+	block := NewBlock(bc.Tail.Block.Hash(), (int64)(0))
+	block.Transactions = bc.Transactions
 
 	for !bc.ValidProof(block) {
 		block.Nonce++
 	}
 
-	bc.transactions = []*Transaction{&Transaction{"s1", "r1", 1000}}
+	bc.Transactions = []*Transaction{&Transaction{"s1", "r1", 1000}}
 	cblock := &CBlock{&block, (*CBlock)(nil)}
-	bc.tail.next = cblock
-	bc.tail = cblock
+	bc.Tail.Next = cblock
+	bc.Tail = cblock
 	return true
 }
 
@@ -69,7 +69,7 @@ func (bc *BlockChain) Mine() bool {
 func (bc *BlockChain) ValidProof(block Block) bool {
 	guess := block.Hash()
 	fmt.Printf("%v %v\n", block.Nonce, guess)
-	if bytes.HasPrefix(make([]byte, 32), guess[:bc.difficulty]) {
+	if bytes.HasPrefix(make([]byte, 32), guess[:bc.Difficulty]) {
 		return true
 	}
 	return false
@@ -78,14 +78,14 @@ func (bc *BlockChain) ValidProof(block Block) bool {
 // is valid chain if every block has the correct prev hash,
 // and the correct nonce to solve proof of work
 func (bc *BlockChain) ValidChain() bool {
-	// curr := bc.head
-	for curr := bc.head; curr != nil; curr = curr.next {
-		currHash := curr.block.Hash()
-		if currHash != curr.next.block.PrevHash ||
-				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.difficulty]) {
+	// curr := bc.Head
+	for curr := bc.Head; curr != nil; curr = curr.Next {
+		currHash := curr.Block.Hash()
+		if currHash != curr.Next.Block.PrevHash ||
+				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.Difficulty]) {
 			return false
 		}
-		// curr = curr.next
+		// curr = curr.Next
 	}
 	return true
 }
@@ -97,19 +97,19 @@ func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
 		return fmt.Errorf("ERR: new blockchain is not valid!!")
 	}
 
-	Acurr, Bcurr := bcA.head, bcB.head
+	Acurr, Bcurr := bcA.Head, bcB.Head
 	for Acurr != nil || Bcurr != nil {
 		if Acurr == nil {
 			bcA.ReplaceChain(bcB)
 		} else if Bcurr == nil {
 			return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
 		}
-		Acurr, Bcurr = Acurr.next , Bcurr.next 
+		Acurr, Bcurr = Acurr.Next , Bcurr.Next 
 	}
 
 	return nil
 }
 
 func (bcA *BlockChain) ReplaceChain(bcB *BlockChain) {
-	bcA.head, bcA.tail = bcB.head, bcB.tail
+	bcA.Head, bcA.Tail = bcB.Head, bcB.Tail
 }

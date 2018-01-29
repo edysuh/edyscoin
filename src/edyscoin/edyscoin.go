@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal("ERR-> remote node offline or incorrect address")
 	}
+	lnode.DoSyncBlockChain(args[1])
 	fmt.Print("OK-> resp: "+ res.SenderId.ToString() + " from addr: " + res.SenderAddr + "\n")
 
 	startCLI(lnode)
@@ -100,7 +101,7 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		if len(toks) != 2 {
 			return "ERR-> usage: `broadcast [string]`"
 		}
-		msg := libedyscoin.NewMessage(lnode, libedyscoin.Params{Payload: ([]byte)(toks[1])})
+		msg := libedyscoin.NewMessage(lnode, "broadcast")
 		rnodes, _ := lnode.DoBroadcast(msg)
 		return "OK-> broadcast to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 
@@ -117,7 +118,7 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 			Recipient: toks[2],
 			Amount:    amount,
 		}
-		lnode.BlockChain.NewTransaction(*txn)
+		lnode.BlockChain.NewTransaction(txn)
 		rnodes, _ := lnode.DoBroadcastNewTransaction(txn)
 		return "OK-> broadcasted a transaction to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 

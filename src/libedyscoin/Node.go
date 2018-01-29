@@ -1,7 +1,6 @@
 package libedyscoin
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -62,15 +61,28 @@ func (n *Node) RpcCall(raddr string, method string, req *Message) (*Message, err
 }
 
 func (n *Node) DoHandshake(raddr string) (*Message, error) {
-	req := &Message{SenderId: n.Id, SenderAddr: n.Address}
+	req := NewMessage(n, "handshake")
 	res, err := n.RpcCall(raddr, "Handshake", req)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !n.Id.Equals(res.SenderId) {
 		n.Peers[res.SenderId] = res.SenderAddr
 	}
+
+	n.BlockChain.DisplayBlockChain()
 	return res, err
+}
+
+func (n *Node) DoSyncBlockChain(raddr string) error {
+	req := NewMessage(n, "sync")
+	res, err := n.RpcCall(raddr, "SyncBlockChain", req)
+	if err != nil {
+		return err
+	}
+	n.BlockChain = &res.Params.BlockChain
+	return nil
 }
 
 // TODO should return the array of ALL nodes broadcasted to, not just peers
@@ -100,20 +112,9 @@ func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
 }
 
 func (n *Node) DoBroadcastNewTransaction(txn *Transaction) ([]Id, error) {
-	marsh, err := json.Marshal(txn)
-	if err != nil {
-		log.Fatal("error in marshalling into json ->", err)
-	}
-	res, err := n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
-	return res, nil
+	return n.DoBroadcast(NewMessage(n, "broadcasttxn", Params{Transaction: *txn}))
 }
 
 func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) ([]Id, error) {
-	bc.DisplayBlockChain()
-	marsh, err := json.Marshal(bc)
-	if err != nil {
-		log.Fatal("error in marshalling into json ->", err)
-	}
-	res, err := n.DoBroadcast(NewMessage(n, Params{Payload: marsh}))
-	return res, nil
+	return n.DoBroadcast(NewMessage(n, "broadcastbc", Params{BlockChain: *bc}))
 }

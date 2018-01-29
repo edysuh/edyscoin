@@ -1,7 +1,6 @@
 package libedyscoin
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 )
@@ -11,25 +10,26 @@ type RpcService struct {
 }
 
 type Message struct {
-	MsgId      Id          `json:"msgid"`
-	SenderId   Id          `json:"senderid"`
-	SenderAddr string      `json:"senderaddr"`
-	Method     string      `json:"method,omitempty"`
-	Params	   Params	   `json:"params,omitempty"`
+	MsgId      Id
+	SenderId   Id    
+	SenderAddr string
+	Method     string
+	Params	   Params
 }
 
 type Params struct {
-	Payload    []byte      `json:"payload,omitempty"`
-	Seenlist   map[Id]bool `json:"seenlist,omitempty"`
-	Success    []Id        `json:"success,omitempty"`
+	BlockChain  BlockChain
+	Transaction Transaction
+	Seenlist    map[Id]bool
+	Success     []Id
 }
 
-func NewMessage(node *Node, params ...Params) *Message {
+func NewMessage(node *Node, method string, params ...Params) *Message {
 	msg := &Message{
 		MsgId:      NewId(node.Address),
 		SenderId:   node.Id,
 		SenderAddr: node.Address,
-		Method:     "Broadcast",
+		Method:     method,
 	}
 	if 0 < len(params) && len(params) < 2 {
 		msg.Params = params[0]
@@ -41,10 +41,21 @@ func (rpcs *RpcService) Handshake(req Message, res *Message) error {
 	if !rpcs.node.Id.Equals(req.SenderId) {
 		rpcs.node.Peers[req.SenderId] = req.SenderAddr
 	}
+
 	*res = Message{
 		MsgId:      req.MsgId,
 		SenderId:   rpcs.node.Id,
 		SenderAddr: rpcs.node.Address,
+	}
+	return nil
+}
+
+func (rpcs *RpcService) SyncBlockChain(req Message, res *Message) error {
+	*res = Message{
+		MsgId:      req.MsgId,
+		SenderId:   rpcs.node.Id,
+		SenderAddr: rpcs.node.Address,
+		Params:		Params{BlockChain: *rpcs.node.BlockChain},
 	}
 	return nil
 }
@@ -65,12 +76,8 @@ func (rpcs *RpcService) Broadcast(req Message, res *Message) error {
 }
 
 func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error {
-	var txn *Transaction
-	if err := json.Unmarshal(req.Params.Payload, txn); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%+v\n", txn)
-	rpcs.node.BlockChain.NewTransaction(*txn)
+	txn := &req.Params.Transaction
+	rpcs.node.BlockChain.NewTransaction(txn)
 
 	_, err := rpcs.node.DoBroadcastNewTransaction(txn)
 	if err != nil {
@@ -88,10 +95,8 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 // TODO WHOS BLOCKCHAIN ARE WE USING?? SHOULDNT INITIALIZE A NEW BLOCKCHAIN FOR EVERY NODE
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
-	var remotebc *BlockChain
-	if err := json.Unmarshal(req.Params.Payload, remotebc); err != nil {
-		log.Fatal(err)
-	}
+	remotebc := &req.Params.BlockChain
+
 	if err := localbc.Consensus(remotebc); err != nil {
 		log.Fatal(err)
 	}
