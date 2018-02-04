@@ -88,6 +88,8 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
 	remotebc := &req.Params.BlockChain
+	fmt.Println("localbc", localbc)
+	fmt.Println("remotebc", remotebc)
 
 	if err := localbc.Consensus(remotebc); err != nil {
 		log.Fatal(err)

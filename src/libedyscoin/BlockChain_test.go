@@ -10,10 +10,10 @@ import (
 func TestNewBlockChain(t *testing.T) {
 	bc := NewBlockChain()
 
-	if bc.head == nil {
+	if bc.Head == nil {
 		log.Fatal("NewBlockChain header not set properly")
 	}
-	if !reflect.DeepEqual(bc.transactions, []*Transaction{}) {
+	if !reflect.DeepEqual(bc.Transactions, []*Transaction{}) {
 		log.Fatal("NewBlockChain transactions slice not initialized properly")
 	}
 }
@@ -21,8 +21,21 @@ func TestNewBlockChain(t *testing.T) {
 func TestMine(t *testing.T) {
 	// t.Skip()
 	bc := NewBlockChain()
-	bc.SetDifficulty(2)
-	bc.Mine()
+	bc.SetDifficulty(1)
+	bc.NewTransaction(&Transaction{"a", "b", 1})
+	tru := bc.Mine()
+	if tru {
+		bc.DisplayBlockChain()
+	}
+	bc.NewTransaction(&Transaction{"b", "c", 2})
+	tru = bc.Mine()
+	if tru {
+		bc.DisplayBlockChain()
+	}
+	tru = bc.ValidChain()
+	if !tru {
+		t.Error("Not a valid chain")
+	}
 }
 
 func TestValidProof(t *testing.T) {

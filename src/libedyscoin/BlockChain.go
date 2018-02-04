@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var DIFFICULTY int = 2
+var DIFFICULTY int = 1
 
 type CBlock struct {
 	Block *Block
@@ -57,10 +57,12 @@ func (bc *BlockChain) Mine() bool {
 		block.Nonce++
 	}
 
-	bc.Transactions = []*Transaction{&Transaction{"s1", "r1", 1000}}
+	bc.Transactions = []*Transaction{}
 	cblock := &CBlock{&block, (*CBlock)(nil)}
 	bc.Tail.Next = cblock
 	bc.Tail = cblock
+
+	bc.DisplayBlockChain()
 	return true
 }
 
@@ -79,13 +81,12 @@ func (bc *BlockChain) ValidProof(block Block) bool {
 // and the correct nonce to solve proof of work
 func (bc *BlockChain) ValidChain() bool {
 	// curr := bc.Head
-	for curr := bc.Head; curr != nil; curr = curr.Next {
+	for curr := bc.Head; curr != nil && curr.Next != nil; curr = curr.Next {
 		currHash := curr.Block.Hash()
 		if currHash != curr.Next.Block.PrevHash ||
 				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.Difficulty]) {
 			return false
 		}
-		// curr = curr.Next
 	}
 	return true
 }
@@ -99,17 +100,14 @@ func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
 
 	Acurr, Bcurr := bcA.Head, bcB.Head
 	for Acurr != nil || Bcurr != nil {
+		fmt.Println("Ac, Bc: ", Acurr, Bcurr)
 		if Acurr == nil {
-			bcA.ReplaceChain(bcB)
+			*bcA = *bcB
 		} else if Bcurr == nil {
 			return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
 		}
-		Acurr, Bcurr = Acurr.Next , Bcurr.Next 
+		Acurr, Bcurr = Acurr.Next, Bcurr.Next 
 	}
 
 	return nil
-}
-
-func (bcA *BlockChain) ReplaceChain(bcB *BlockChain) {
-	bcA.Head, bcA.Tail = bcB.Head, bcB.Tail
 }

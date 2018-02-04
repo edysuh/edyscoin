@@ -130,6 +130,7 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		mined := lnode.BlockChain.Mine()
 		if mined {
 			fmt.Printf("OK-> mined a new block!\n")
+			lnode.BlockChain.DisplayBlockChain()
 			rnodes, _ := lnode.DoBroadcastNewBlockChain(lnode.BlockChain)
 			return "OK-> broadcasted new block to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
 		}
