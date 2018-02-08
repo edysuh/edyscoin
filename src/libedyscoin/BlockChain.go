@@ -21,9 +21,11 @@ type BlockChain struct {
 
 // TODO does the genesis block need proof of work?
 func NewBlockChain() *BlockChain {
-	genesis := NewBlock([32]byte{}, 0)
-	cblock := &CBlock{&genesis, (*CBlock)(nil)}
-	return &BlockChain{cblock, cblock, DIFFICULTY, []*Transaction{}}
+	bc := new(BlockChain)
+	bc.SetDifficulty(DIFFICULTY)
+	bc.Mine()
+	bc.Head = bc.Tail
+	return bc
 }
 
 func (bc *BlockChain) NewTransaction(txn *Transaction) {
@@ -50,7 +52,12 @@ func (bc *BlockChain) SetDifficulty(d int) {
 // hash the prev last block, generate a nonce (just zero for now),
 // and check for valid proof; append to chain and reset curr transactions
 func (bc *BlockChain) Mine() bool {
-	block := NewBlock(bc.Tail.Block.Hash(), (int64)(0))
+	var block Block
+	if bc.Tail != nil {
+		block = NewBlock(bc.Tail.Block.Hash(), (int64)(0))
+	} else {
+		block = NewBlock([32]byte{}, (int64)(0))
+	}
 	block.Transactions = bc.Transactions
 
 	for !bc.ValidProof(block) {
@@ -59,10 +66,11 @@ func (bc *BlockChain) Mine() bool {
 
 	bc.Transactions = []*Transaction{}
 	cblock := &CBlock{&block, (*CBlock)(nil)}
-	bc.Tail.Next = cblock
+	if bc.Tail != nil {
+		bc.Tail.Next = cblock
+	}
 	bc.Tail = cblock
 
-	bc.DisplayBlockChain()
 	return true
 }
 
@@ -71,7 +79,7 @@ func (bc *BlockChain) Mine() bool {
 func (bc *BlockChain) ValidProof(block Block) bool {
 	guess := block.Hash()
 	fmt.Printf("%v %v\n", block.Nonce, guess)
-	if bytes.HasPrefix(make([]byte, 32), guess[:bc.Difficulty]) {
+	if bytes.HasPrefix(guess[:], make([]byte, bc.Difficulty)) {
 		return true
 	}
 	return false
@@ -84,7 +92,7 @@ func (bc *BlockChain) ValidChain() bool {
 	for curr := bc.Head; curr != nil && curr.Next != nil; curr = curr.Next {
 		currHash := curr.Block.Hash()
 		if currHash != curr.Next.Block.PrevHash ||
-				!bytes.HasPrefix(make([]byte, 32), currHash[:bc.Difficulty]) {
+		   !bytes.HasPrefix(currHash[:], make([]byte, bc.Difficulty)) {
 			return false
 		}
 	}

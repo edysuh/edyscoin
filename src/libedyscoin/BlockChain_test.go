@@ -24,14 +24,12 @@ func TestMine(t *testing.T) {
 	bc.SetDifficulty(1)
 	bc.NewTransaction(&Transaction{"a", "b", 1})
 	tru := bc.Mine()
-	if tru {
-		bc.DisplayBlockChain()
-	}
 	bc.NewTransaction(&Transaction{"b", "c", 2})
 	tru = bc.Mine()
 	if tru {
 		bc.DisplayBlockChain()
 	}
+	log.Println("----------------")
 	tru = bc.ValidChain()
 	if !tru {
 		t.Error("Not a valid chain")

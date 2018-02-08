@@ -31,7 +31,7 @@ func NewMessage(node *Node, method string, params ...Params) *Message {
 		SenderAddr: node.Address,
 		Method:     method,
 	}
-	if 0 < len(params) && len(params) < 2 {
+	if len(params) == 1 {
 		msg.Params = params[0]
 	}
 	return msg

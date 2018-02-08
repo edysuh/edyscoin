@@ -121,19 +121,19 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		}
 		lnode.BlockChain.NewTransaction(txn)
 		rnodes, _ := lnode.DoBroadcastNewTransaction(txn)
-		return "OK-> broadcasted a transaction to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
+		return "OK-> broadcasted a transaction to all nodes:\n" +
+			fmt.Sprintf("%+v", rnodes)
 
 	case "mine":
 		if len(toks) != 1 {
 			return "ERR-> usage: `mine`"
 		}
-		mined := lnode.BlockChain.Mine()
-		if mined {
-			fmt.Printf("OK-> mined a new block!\n")
-			lnode.BlockChain.DisplayBlockChain()
-			rnodes, _ := lnode.DoBroadcastNewBlockChain(lnode.BlockChain)
-			return "OK-> broadcasted new block to all nodes:\n" + fmt.Sprintf("%+v", rnodes)
-		}
+		lnode.BlockChain.Mine()
+		fmt.Printf("OK-> mined a new block!\n")
+		lnode.BlockChain.DisplayBlockChain()
+		rnodes, _ := lnode.DoBroadcastNewBlockChain(lnode.BlockChain)
+		return "OK-> broadcasted new block to all nodes:\n" +
+			fmt.Sprintf("%+v", rnodes)
 	}
 
 	return "ERR-> command not recognized"
