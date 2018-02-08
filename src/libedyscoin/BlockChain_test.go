@@ -27,7 +27,7 @@ func TestMine(t *testing.T) {
 	bc.NewTransaction(&Transaction{"b", "c", 2})
 	tru = bc.Mine()
 	if tru {
-		bc.DisplayBlockChain()
+		bc.Display()
 	}
 	log.Println("----------------")
 	tru = bc.ValidChain()

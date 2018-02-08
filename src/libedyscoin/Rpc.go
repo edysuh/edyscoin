@@ -2,7 +2,7 @@ package libedyscoin
 
 import (
 	"fmt"
-	"log"
+	// "log"
 )
 
 type RpcService struct {
@@ -78,7 +78,6 @@ func (rpcs *RpcService) Broadcast(req Message, res *Message) error {
 func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error {
 	txn := &req.Params.Transaction
 	rpcs.node.BlockChain.NewTransaction(txn)
-	fmt.Println("list txn: ")
 	rpcs.node.BlockChain.ListTransactions()
 
 	rpcs.Broadcast(req, res)
@@ -88,11 +87,9 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
 	remotebc := &req.Params.BlockChain
-	fmt.Println("localbc", localbc)
-	fmt.Println("remotebc", remotebc)
 
 	if err := localbc.Consensus(remotebc); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	rpcs.Broadcast(req, res)

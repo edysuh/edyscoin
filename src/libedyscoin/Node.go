@@ -30,6 +30,22 @@ func NewNode(laddr string) *Node {
 	return n
 }
 
+func NewNodeInSync(laddr string, raddr string) *Node {
+	n := &Node{
+		Id:         NewId(laddr),
+		Address:    laddr,
+		Peers:      make(map[Id]string),
+	}
+
+	rpc.Register(&RpcService{n})
+	rpc.HandleHTTP()
+	n.StartServer(laddr)
+
+	n.DoSyncBlockChain(raddr)
+
+	return n
+}
+
 func (n *Node) StartServer(laddr string) {
 	listener, err := net.Listen("tcp", laddr)
 	if err != nil {
@@ -71,7 +87,7 @@ func (n *Node) DoHandshake(raddr string) (*Message, error) {
 		n.Peers[res.SenderId] = res.SenderAddr
 	}
 
-	n.BlockChain.DisplayBlockChain()
+	n.BlockChain.Display()
 	return res, err
 }
 
