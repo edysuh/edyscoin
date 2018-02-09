@@ -16,25 +16,27 @@ type BlockChain struct {
 	Head         *CBlock
 	Tail         *CBlock
 	Difficulty   int
-	Transactions []Transaction
+	Transactions []*Transaction
 }
 
 // TODO does the genesis block need proof of work?
 func NewBlockChain() *BlockChain {
 	bc := new(BlockChain)
 	bc.SetDifficulty(DIFFICULTY)
-	bc.Mine()
-	bc.Head = bc.Tail
+	block := bc.MineBlock()
+	genesis := &CBlock{block, (*CBlock)(nil)}
+	bc.Head, bc.Tail = genesis, genesis
 	return bc
 }
 
 func (bc *BlockChain) NewTransaction(txn *Transaction) {
-	bc.Transactions = append(bc.Transactions, *txn)
+	bc.Transactions = append(bc.Transactions, txn)
 }
 
 func (bc *BlockChain) Display() {
 	for curr := bc.Head; curr != nil; curr = curr.Next {
-		fmt.Printf("%+v\n-> hash: %v\n", *curr.Block, curr.Block.Hash())
+		// fmt.Printf("%+v\n-> hash: %v\n", *curr.Block, curr.Block.Hash())
+		fmt.Printf("%+v\n", *curr.Block)
 	}
 }
 
@@ -48,10 +50,25 @@ func (bc *BlockChain) SetDifficulty(d int) {
 	bc.Difficulty = d
 }
 
+func (bc *BlockChain) Mine() bool {
+	block := bc.MineBlock()
+
+	bc.Transactions = []*Transaction{}
+	cblock := &CBlock{block, (*CBlock)(nil)}
+	fmt.Printf("first: %+v, %+v\n", bc.Tail, bc.Tail.Block)
+	bc.Tail.Next = cblock
+	fmt.Printf("second: %+v, %+v\n", bc.Tail, bc.Tail.Block)
+	bc.Tail = cblock
+	fmt.Printf("third: %+v, %+v\n", bc.Tail, bc.Tail.Block)
+
+	fmt.Println("cblock", *cblock.Block)
+	return true
+}
+
 // validate the current transactions into a new block to the blockchain
 // hash the prev last block, generate a nonce (just zero for now),
 // and check for valid proof; append to chain and reset curr transactions
-func (bc *BlockChain) Mine() bool {
+func (bc *BlockChain) MineBlock() *Block {
 	var block Block
 	if bc.Tail != nil {
 		block = NewBlock(bc.Tail.Block.Hash(), (int64)(0))
@@ -60,23 +77,17 @@ func (bc *BlockChain) Mine() bool {
 	}
 	block.Transactions = bc.Transactions
 
-	for !bc.ValidProof(block) {
+	for !bc.ValidProof(&block) {
 		block.Nonce++
 	}
 
-	bc.Transactions = []Transaction{}
-	cblock := &CBlock{&block, (*CBlock)(nil)}
-	if bc.Tail != nil {
-		bc.Tail.Next = cblock
-	}
-	bc.Tail = cblock
-
-	return true
+	bc.Transactions = []*Transaction{}
+	return &block
 }
 
 // is valid proof if first D bytes are zeros, or the guessed hash < 2^(32-D),
 // where D is difficulty
-func (bc *BlockChain) ValidProof(block Block) bool {
+func (bc *BlockChain) ValidProof(block *Block) bool {
 	guess := block.Hash()
 	fmt.Printf("%v %v\n", block.Nonce, guess)
 	if bytes.HasPrefix(guess[:], make([]byte, bc.Difficulty)) {
@@ -87,44 +98,20 @@ func (bc *BlockChain) ValidProof(block Block) bool {
 
 // is valid chain if every block has the correct prev hash,
 // and the correct nonce to solve proof of work
-func (bc *BlockChain) ValidChai() bool {
-	fmt.Println("VALID CHAIN??")
-	for curr := bc.Head; curr != nil && curr.Next != nil; curr = curr.Next {
-		currHash := curr.Block.Hash()
-		fmt.Println(curr.Block)
-		fmt.Println(curr.Next.Block)
-		fmt.Println(currHash)
-		fmt.Println(curr.Next.Block.PrevHash)
-		if currHash != curr.Next.Block.PrevHash ||
-		   !bytes.HasPrefix(currHash[:], make([]byte, bc.Difficulty)) {
-			return false
-		}
-	}
-	return true
-}
-
 func (bc *BlockChain) ValidChain() bool {
-	fmt.Println("VALID CHAIN??")
 	if bc.Head.Next == nil {
 		hash := bc.Head.Block.Hash()
-		fmt.Println(hash)
 		return bytes.HasPrefix(hash[:], make([]byte, bc.Difficulty))
 	}
 
 	prev := bc.Head
 	for curr := prev.Next; curr != nil; prev, curr = curr, curr.Next {
 		hash := curr.Block.Hash()
-		fmt.Println(*prev.Block)
-		fmt.Println(*curr.Block)
-		fmt.Println(prev.Block.Hash())
-		fmt.Println(hash)
 		if prev.Block.Hash() != curr.Block.PrevHash ||
 		!bytes.HasPrefix(hash[:], make([]byte, bc.Difficulty)) {
 			return false
 		}
 	}
-
-
 	return true
 }
 
@@ -138,11 +125,8 @@ func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
 		Acurr, Bcurr = Acurr.Next, Bcurr.Next
 	}
 
-	if Acurr == nil {
-		*bcA = *bcB
-	} else {
+	if Acurr != nil {
 		return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
 	}
-
 	return nil
 }

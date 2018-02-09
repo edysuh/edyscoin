@@ -97,7 +97,7 @@ func (n *Node) DoSyncBlockChain(raddr string) error {
 	if err != nil {
 		return err
 	}
-	n.BlockChain = &res.Params.BlockChain
+	n.BlockChain = res.Params.BlockChain
 	return nil
 }
 
@@ -131,9 +131,9 @@ func (n *Node) DoBroadcast(req *Message) ([]Id, error) {
 }
 
 func (n *Node) DoBroadcastNewTransaction(txn *Transaction) ([]Id, error) {
-	return n.DoBroadcast(NewMessage(n, "BroadcastNewTransaction", Params{Transaction: *txn}))
+	return n.DoBroadcast(NewMessage(n, "BroadcastNewTransaction", Params{Transaction: txn}))
 }
 
 func (n *Node) DoBroadcastNewBlockChain(bc *BlockChain) ([]Id, error) {
-	return n.DoBroadcast(NewMessage(n, "BroadcastNewBlockChain", Params{BlockChain: *bc}))
+	return n.DoBroadcast(NewMessage(n, "BroadcastNewBlockChain", Params{BlockChain: bc}))
 }

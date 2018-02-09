@@ -18,8 +18,8 @@ type Message struct {
 }
 
 type Params struct {
-	BlockChain  BlockChain
-	Transaction Transaction
+	BlockChain  *BlockChain
+	Transaction *Transaction
 	Seenlist    map[Id]bool
 	Success     []Id
 }
@@ -55,7 +55,7 @@ func (rpcs *RpcService) SyncBlockChain(req Message, res *Message) error {
 		MsgId:      req.MsgId,
 		SenderId:   rpcs.node.Id,
 		SenderAddr: rpcs.node.Address,
-		Params:		Params{BlockChain: *rpcs.node.BlockChain},
+		Params:		Params{BlockChain: rpcs.node.BlockChain},
 	}
 	return nil
 }
@@ -76,9 +76,9 @@ func (rpcs *RpcService) Broadcast(req Message, res *Message) error {
 }
 
 func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error {
-	txn := &req.Params.Transaction
+	txn := req.Params.Transaction
 	rpcs.node.BlockChain.NewTransaction(txn)
-	rpcs.node.BlockChain.ListTransactions()
+	// rpcs.node.BlockChain.ListTransactions()
 
 	rpcs.Broadcast(req, res)
 	return nil
@@ -86,11 +86,14 @@ func (rpcs *RpcService) BroadcastNewTransaction(req Message, res *Message) error
 
 func (rpcs *RpcService) BroadcastNewBlockChain(req Message, res *Message) error {
 	localbc := rpcs.node.BlockChain
-	remotebc := &req.Params.BlockChain
+	remotebc := req.Params.BlockChain
+	fmt.Printf("%#v\n", localbc)
+	fmt.Printf("%#v\n", remotebc)
 
 	if err := localbc.Consensus(remotebc); err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
+	*rpcs.node.BlockChain = *req.Params.BlockChain
 
 	rpcs.Broadcast(req, res)
 	return nil
