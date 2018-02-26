@@ -24,8 +24,10 @@ func main() {
 	var lnode *libedyscoin.Node
 	if args[0] == args[1] {
 		lnode = libedyscoin.NewNode(args[0])
+		fmt.Printf("bc %+#v\n", lnode.BlockChain)
 	} else {
 		lnode = libedyscoin.NewNodeInSync(args[0], args[1])
+		fmt.Printf("bc %+#v\n", lnode.BlockChain)
 	}
 	// fmt.Printf("local node: %+v\n", lnode)
 	res, err := lnode.DoHandshake(args[1])
@@ -100,13 +102,13 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		return "OK-> response from node id: "+ res.SenderId.ToString() +
 			" from addr: " + res.SenderAddr
 
-	case "broadcast":
-		if len(toks) != 2 {
-			return "ERR-> usage: `broadcast [string]`"
-		}
-		msg := libedyscoin.NewMessage(lnode, "Broadcast")
-		lnode.DoBroadcast(msg)
-		return "OK-> broadcast to all nodes\n"
+	// case "broadcast":
+	// 	if len(toks) != 2 {
+	// 		return "ERR-> usage: `broadcast [string]`"
+	// 	}
+	// 	msg := libedyscoin.NewMessage(lnode, "Broadcast")
+	// 	lnode.DoBroadcast(msg)
+	// 	return "OK-> broadcast to all nodes\n"
 
 	case "txn":
 		fallthrough

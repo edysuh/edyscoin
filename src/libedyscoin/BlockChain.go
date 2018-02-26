@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var DIFFICULTY int = 1
+var DIFFICULTY int = 2
 
 type CBlock struct {
 	Block *Block
@@ -126,7 +126,9 @@ func (bcA *BlockChain) Consensus(bcB *BlockChain) error {
 	}
 
 	if Acurr != nil {
-		return fmt.Errorf("ERR: new blockchain is shorter than current blockchain!!")
+		return fmt.Errorf("ERR: new blockchain is shorter than ours!!")
+	} else if Acurr == nil && Bcurr == nil {
+		return fmt.Errorf("ERR: new blockchain is the same length as ours!!")
 	}
 	return nil
 }

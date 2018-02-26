@@ -98,6 +98,12 @@ func (n *Node) DoSyncBlockChain(raddr string) error {
 		return err
 	}
 	n.BlockChain = res.Params.BlockChain
+	// TODO: FRIGGIN INSANITY
+	// if res.Params.BlockChain.Head.Next == nil {
+	// 	bc.Tail = bc.Head
+	// }
+	// fmt.Printf("syncd %+#v\n", n.BlockChain)
+	// n.BlockChain.Mine()
 	return nil
 }
 
