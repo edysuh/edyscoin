@@ -102,13 +102,13 @@ func executeLine(lnode *libedyscoin.Node, line string) string {
 		return "OK-> response from node id: "+ res.SenderId.ToString() +
 			" from addr: " + res.SenderAddr
 
-	// case "broadcast":
-	// 	if len(toks) != 2 {
-	// 		return "ERR-> usage: `broadcast [string]`"
-	// 	}
-	// 	msg := libedyscoin.NewMessage(lnode, "Broadcast")
-	// 	lnode.DoBroadcast(msg)
-	// 	return "OK-> broadcast to all nodes\n"
+	case "broadcast":
+		if len(toks) != 2 {
+			return "ERR-> usage: `broadcast [string]`"
+		}
+		msg := libedyscoin.NewMessage(lnode, "Broadcast")
+		lnode.DoBroadcast(msg)
+		return "OK-> broadcast to all nodes\n"
 
 	case "txn":
 		fallthrough

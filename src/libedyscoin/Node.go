@@ -13,6 +13,7 @@ type Node struct {
 	Address		string
 	Peers       map[Id]string
 	BlockChain  *BlockChain
+	msgChan		chan(Message)
 }
 
 func NewNode(laddr string) *Node {
@@ -98,12 +99,13 @@ func (n *Node) DoSyncBlockChain(raddr string) error {
 		return err
 	}
 	n.BlockChain = res.Params.BlockChain
-	// TODO: FRIGGIN INSANITY
-	// if res.Params.BlockChain.Head.Next == nil {
-	// 	bc.Tail = bc.Head
-	// }
-	// fmt.Printf("syncd %+#v\n", n.BlockChain)
-	// n.BlockChain.Mine()
+
+	curr := n.BlockChain.Head
+	for curr.Next != nil {
+		curr = curr.Next
+	}
+	n.BlockChain.Tail = curr
+
 	return nil
 }
 
